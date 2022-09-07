@@ -7,7 +7,7 @@ notification_manager = NotificationManager()
 datamanager = DataManager()
 flightsearch = FlightSearch()
 sheet_data = datamanager.get_data()
-originalplace = "LON"
+originalplace = "LHR"
 if sheet_data[0]["iataCode"] == "":
     for row in sheet_data:
          row["iataCode"] = flightsearch.get_name_code(row["city"])
@@ -20,16 +20,16 @@ for destination in sheet_data:
                              destination_code=destination["iataCode"],
                              from_time=tomorrow,
                              to_time=six_month_from_today)
-    try:
-        if newflight.money < destination["lowestPrice"]:
-            notification_manager.send_sms(
-                message=f"Low price alert! Only £20 to fly from {newflight.cityfrom}-"
-                        f"{newflight.flyfrom} to {newflight.cityto}-{newflight.flyto},"
-                        f" from {newflight.out_date} to {newflight.return_date}."
-            )
-    except AttributeError:
-        pass
-    
+    if newflight is None:
+        continue
+
+    if newflight.money < destination["lowestPrice"]:
+        message=f"Low price alert! Only £{newflight.money} to fly from {newflight.cityfrom}-{newflight.flyfrom} to" \
+                f" {newflight.cityto}-{newflight.flyto},from {newflight.out_date} to {newflight.return_date}."
+        if newflight.stop_overs > 0:
+            message += f"\nFlight has {newflight.stop_overs} stop over, via {newflight.via_city}."
+            print(message)
+            notification_manager.send_sms(message)
 
 
 
